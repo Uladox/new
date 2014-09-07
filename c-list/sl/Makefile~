@@ -1,0 +1,4 @@
+all: test
+	gcc -c -Wall -Werror -fpic test.c
+all:
+	gcc -shared -o libtest.so test.o

@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct node{
+	int x;
+	int y;
+	struct node *hor;
+	struct node *ver;
+	char *str1;
+};
+
+main()
+{
+	struct node cat;
+	char str1[] = "Hello people!";
+	cat.str1 = (char *) malloc(100);
+	strcat(cat.str1, str1);
+	printf("%s", cat.str1);
+	free(cat.str1);
+}

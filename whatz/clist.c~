@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+struct node{
+	int x;
+	int y;
+	struct node *hor;
+	struct node *ver;
+	char *str;
+};
+
+//sets string in node (argnode) to value (like str_new)
+void set_node(struct node *argnode, const char *value)
+{
+	if (argnode->str == NULL){
+		argnode->str = malloc(strlen(value));
+		strcpy(argnode->str, value);
+	} else {
+		argnode->str = realloc(argnode->str, strlen(value));
+		strcpy(argnode->str, value);
+	}
+}
+
+//makes first string exactly equivalent (size and content) to second
+void str_new(char *argstr, const char *value)
+{
+	if (argstr == NULL){
+		argstr =  malloc(strlen(value));
+		strcpy(argstr, value);
+	} else {
+		//	char *tempstr = argstr;
+		if ((argstr =  realloc(argstr, strlen(value))) == NULL){
+			printf("Error: yo out of memory!");
+			exit(EXIT_FAILURE);
+		} else {
+			strcpy(argstr, value);
+		}
+	}
+}
+
+//returns string without whitespace at beggining
+char *spilt_space(char* argstr)
+{
+	char *rstpnt = argstr;
+	while (isspace(*argstr))
+		argstr++;	
+        char* tempstr = (char *) malloc(strlen(argstr));
+	strcpy(tempstr, argstr);
+	argstr = rstpnt;
+	return tempstr;
+}
+
+char *tok(char* argstr)
+{
+	char *rstpnt = argstr;
+	while (!isspace(*argstr))
+		argstr++;
+	int token_s = strlen(rstpnt) - strlen(argstr);
+        char* tempstr =  malloc(token_s);
+	argstr = rstpnt;
+	strncpy(tempstr, argstr, token_s);
+	return tempstr;
+}
+main()
+{
+	char *a = malloc(100);
+        strcpy(a, "  df  ghv fg"); 
+	char *b = spilt_space(a);
+	str_new(a, b);
+	char *c = tok(a);
+//	str_new(a, c);
+	printf("%s", c);
+	free(a);
+	free(b);
+	free(c);
+}

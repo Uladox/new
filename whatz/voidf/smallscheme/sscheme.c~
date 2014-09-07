@@ -1,0 +1,170 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <wchar.h>
+
+
+typedef enum {list, atom, funct, end} cell_t;
+struct cell
+{
+	cell_t type_cell;
+	union content{
+		struct cell *cellist;	 
+		wchar_t *str;
+		struct cell *(*ptrfunct)(struct cell *);
+	} stuff;
+};
+
+size_t list_size(struct cell *arglist)
+{
+	struct cell *tmptr = arglist->stuff.cellist;
+	if(tmptr == NULL)
+		return 0;
+	size_t result;
+	for(result = 0; tmptr->type_cell != end; tmptr++)
+		result++;
+	return result;
+}
+
+void free_all(struct cell *freeable, int free_here)
+{
+
+	if(freeable->type_cell == atom){
+		if(freeable->stuff.str != NULL){
+			free(freeable->stuff.str);
+			freeable->stuff.str = NULL;
+		}
+	}
+
+	if(freeable->type_cell == list){
+		struct cell *rstpnt = freeable->stuff.cellist;
+		while(freeable->stuff.cellist->type_cell != end)
+			freeable->stuff.cellist++;
+		while(freeable->stuff.cellist != rstpnt){
+			free_all(freeable->stuff.cellist,0);
+			freeable->stuff.cellist--;
+		}
+		free_all(freeable->stuff.cellist, 1);
+	}
+
+	if(free_here == 1)
+		free(freeable);
+}
+
+struct cell *eval(struct cell *argcell)
+{
+	return argcell->stuff.cellist->stuff.ptrfunct(argcell->stuff.cellist + 1);
+}
+
+void free_alone(struct cell *freeable)
+{
+	free_all((++freeable),0);
+	free((--freeable));
+}
+
+struct cell *quote(struct cell *argcell)
+{
+	return argcell;
+}
+
+struct cell *car(struct cell *argcell)
+{
+	struct cell *result = malloc(sizeof(struct cell));
+	*result = *(eval(argcell)->stuff.cellist);
+//	free_alone(argcell);
+	return result;
+}
+
+struct cell *new_funct(struct cell *(*funct_name)(struct cell *))
+{
+	struct cell *result = malloc(sizeof(struct cell));
+	result->type_cell = funct;
+	result->stuff.ptrfunct = funct_name;
+	return result;
+}
+
+struct cell *new_atom(wchar_t *argstr)
+{
+	struct cell *result = malloc(sizeof(struct cell));
+	result->type_cell = atom;
+	result->stuff.str = malloc(sizeof(wchar_t) * (wcslen(argstr) + 1));
+	wcscpy(result->stuff.str, argstr);
+	return result;
+}
+
+struct cell *new_list(void)
+{
+	struct cell *result = malloc(sizeof(struct cell));
+	result->type_cell = list;
+	result->stuff.cellist = malloc(sizeof(struct cell));
+	result->stuff.cellist->type_cell = end;
+	return result;
+}
+
+void insert_atom(struct cell *arglist, struct cell *argatom)
+{
+	//too lazy to make new pointer to keep names short
+	//but I'll later claim that this is more efficient
+	arglist->stuff.cellist = realloc(arglist->stuff.cellist, (sizeof(struct cell)) * (list_size(arglist) + 2));
+	struct cell *tmptr = arglist->stuff.cellist;
+	while(tmptr->type_cell != end)
+		tmptr++;
+	*tmptr = *argatom;
+	tmptr++;
+	tmptr->type_cell = end;
+}
+
+void insert_atom_rel(struct cell *arglist, struct cell *argatom)
+{
+	insert_atom(arglist, argatom);
+	free(argatom);
+}
+
+int main(int argc, char *argv[])
+{
+/*
+        struct cell *hmm = malloc (sizeof (struct cell));
+	hmm->stuff.cellist = NULL;
+	hmm->stuff.str = malloc(sizeof(wchar_t) * 3);
+	hmm->type_cell = atom;
+	wcscpy(hmm->stuff.str, L"no");
+*/
+/*
+	struct cell *amm = malloc (sizeof (struct cell));
+	amm->stuff.cellist = malloc(sizeof(struct cell)*2);
+
+	amm->stuff.cellist->stuff.cellist = NULL;
+	amm->stuff.cellist->stuff.str = malloc(sizeof(wchar_t) * 3);
+	wcscpy(amm->stuff.cellist->stuff.str, L"no");
+	++(amm->stuff.cellist);
+	amm->stuff.cellist->type_cell = end;
+	--(amm->stuff.cellist);
+	amm->type_cell = list;
+	amm->stuff.cellist->type_cell = atom;
+	free_all(amm, 1);
+*/
+		wprintf(L"Hi!");
+	struct cell *a = new_list();
+	struct cell *b = new_atom(L"");
+	struct cell *c = new_list();
+	struct cell *d = new_atom(L"");
+	struct cell *e = new_list();
+	struct cell *f = new_atom(L"dsdsds");
+	
+	b->stuff.ptrfunct = &car;
+	d->stuff.ptrfunct = &quote;
+
+	insert_atom(e, f);
+	insert_atom(c, d);
+	insert_atom(c, e);
+	insert_atom(a, b);
+	insert_atom(a, c);
+
+	wprintf(L"%ls", eval(a)->stuff.str);
+//	free_all(a, 1);
+//	free(amm);
+//	if(amm->stuff.cellist->type_cell == atom)
+//				wprintf(L"%ls",L" Run");
+
+	return 0;
+}
+//Notes: Perl glue, Guile, Agda, Rails
